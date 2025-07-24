@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game - Complete Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+
+        canvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .settings-label {
+            font-weight: bold;
+            min-width: 120px;
+            text-align: left;
+        }
+
+        select {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-over-content {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .game-over-title {
+            font-size: 32px;
+            color: #ff4757;
+            margin-bottom: 20px;
+        }
+
+        .game-over-stats {
+            margin: 20px 0;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .pause-overlay {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 15px;
+            }
+            
+            .status-bar {
+                font-size: 14px;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 12px;
+            }
+        }
+
+        /* Mobile-friendly styles */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 5px;
+                max-width: 100vw;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            .status-bar {
+                flex-direction: column;
+                gap: 4px;
+                font-size: 13px;
+                padding: 6px;
+            }
+            .status-item {
+                min-width: 0;
+                width: 100%;
+                align-items: flex-start;
+            }
+            canvas {
+                width: 98vw !important;
+                height: auto !important;
+                max-width: 100vw !important;
+                max-height: 60vh !important;
+                margin: 0 auto 10px auto;
+                display: block;
+            }
+            .controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            button {
+                width: 100%;
+                font-size: 15px;
+                padding: 14px 0;
+            }
+            .instructions {
+                font-size: 13px;
+                padding: 0 2px;
+            }
+            .settings-content {
+                padding: 10px;
+                max-width: 98vw;
+            }
+        }
+
+        .power-up {
+            border: 2px solid #ffff00;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .high-score {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Add progress bar styles */
+        .progress-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 2000;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">Score</div>
+                <div class="status-value" id="score">0</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Length</div>
+                <div class="status-value" id="length">5</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Food</div>
+                <div class="status-value" id="food-count">8</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Speed</div>
+                <div class="status-value" id="speed">600ms</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">High Score</div>
+                <div class="status-value high-score" id="high-score">0</div>
+            </div>
+            <div class="status-item" id="demoMetrics" style="display: none;">
+                <div class="status-label">Run Time</div>
+                <div class="status-value" id="timeToCollision">--</div>
+            </div>
+            <div class="status-item" id="demoMetrics2" style="display: none;">
+                <div class="status-label">Path Completion</div>
+                <div class="status-value" id="pathCompletion">--</div>
+            </div>
+
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        
+        <div class="pause-overlay" id="pauseOverlay">PAUSED</div>
+        
+        <div class="controls">
+            <button onclick="togglePause()">Pause/Resume (Space)</button>
+            <button onclick="restartGame()">Restart (R)</button>
+            <button onclick="showSettings()">Settings</button>
+        </div>
+        
+        <div class="instructions">
+            <strong>Controls:</strong> Arrow Keys to move • Space to pause • R to restart<br>
+            <strong>Goal:</strong> Eat food to grow • Avoid eating your tail • Wall collisions just stop movement
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <h2 style="margin-bottom: 25px; text-align: center;">Game Settings</h2>
+            
+            <div class="settings-row">
+                <label class="settings-label">Game Speed:</label>
+                <select id="speedSetting">
+                    <option value="1000">Very Slow (1000ms)</option>
+                    <option value="750">Slow (750ms)</option>
+                    <option value="500" selected>Medium (500ms)</option>
+                    <option value="300">Fast (300ms)</option>
+                    <option value="150">Very Fast (150ms)</option>
+                </select>
+            </div>
+            
+            <div class="settings-row">
+                <label class="settings-label">Food Count:</label>
+                <select id="foodCountSetting">
+                    <option value="5">Few (5 pieces)</option>
+                    <option value="8" selected>Normal (8 pieces)</option>
+                    <option value="12">Many (12 pieces)</option>
+                    <option value="100">Mayhem (100 pieces)</option>
+                </select>
+            </div>
+            
+            <div class="settings-row">
+                <label class="settings-label">Board Size:</label>
+                <select id="boardSizeSetting">
+                    <option value="small">Small (30x20)</option>
+                    <option value="medium" selected>Medium (40x25)</option>
+                    <option value="large">Large (50x30)</option>
+                    <option value="xlarge">Extra Large (60x40)</option>
+                    <option value="giant">Giant (80x50)</option>
+                    <option value="colossal">Colossal (148x90)</option>
+                    <option value="screensaver">Screensaver (384x216)</option>
+                </select>
+            </div>
+            
+            <div class="settings-row">
+                <label class="settings-label">Color Scheme:</label>
+                <select id="colorSchemeSetting">
+                    <option value="rainbow" selected>Rainbow Gradient</option>
+                    <option value="fire">Fire</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="purple">Purple Galaxy</option>
+                    <option value="classic">Classic Green</option>
+                    <option value="neonGlow">Neon Glow</option>
+                    <option value="retroPixel">Retro Pixel</option>
+                    <option value="galaxy">Galaxy</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="matrix">Matrix</option>
+                    <option value="1bit">1-bit (Black & White)</option>
+                    <option value="2bit">2-bit (4 Color Gray)</option>
+                    <option value="3bit">3-bit (8 Color RGB)</option>
+                    <option value="4bit">4-bit (16 Color CGA/EGA)</option>
+                    <option value="5bit">5-bit (32 Color Retro)</option>
+                    <option value="6bit">6-bit (64 Color Retro)</option>
+                    <option value="7bit">7-bit (128 Color Retro)</option>
+                    <option value="8bit">8-bit (256 Color Xterm)</option>
+                </select>
+            </div>
+            
+            <div class="settings-row">
+                <label class="settings-label">Speed Increase:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="speedIncreaseSetting" checked>
+                    <label for="speedIncreaseSetting">Enable gradual speed increase</label>
+                </div>
+            </div>
+            
+
+            
+            <div class="settings-row">
+                <label class="settings-label">Demo/ScreenSaver:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="demoModeSetting">
+                    <label for="demoModeSetting">Enable Demo/ScreenSaver mode</label>
+                </div>
+            </div>
+            
+
+            
+            <div class="settings-row">
+                <label class="settings-label">Food Density:</label>
+                <div class="input-container">
+                    <input type="number" id="foodDensity" min="1" max="35" step="1" value="25">
+                    <label for="foodDensity">pieces per food eaten</label>
+                </div>
+            </div>
+            
+            <div class="controls" style="margin-top: 30px;">
+                <button onclick="applySettings()">Apply & Start Game</button>
+                <button onclick="hideSettings()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="game-over-modal" id="gameOverModal">
+        <div class="game-over-content">
+            <div class="game-over-title">Game Over!</div>
+            <div class="game-over-stats" id="gameOverStats"></div>
+            <div class="controls">
+                <button onclick="restartGame()">Play Again</button>
+                <button onclick="showSettings()">Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar Modal -->
+    <div class="progress-container" id="progressContainer">
+        <div>Generating Hamiltonian Path...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div id="progressText">0%</div>
+    </div>
+
+    <script>
+        // Game state
+        let canvas, ctx;
+        let gameRunning = false;
+        let gamePaused = false;
+        let gameLoop;
+        let demoMode = false;
+        
+        // Game settings
+        let settings = {
+            speed: 600,
+            foodCount: 8,
+            boardSize: 'medium',
+            colorScheme: 'rainbow',
+            speedIncrease: true,
+            foodDensity: 25
+        };
+
+        // Board dimensions
+        const boardSizes = {
+            small: { width: 30, height: 20, cellSize: 15 },
+            medium: { width: 40, height: 25, cellSize: 15 },
+            large: { width: 50, height: 30, cellSize: 15 },
+            xlarge: { width: 60, height: 40, cellSize: 15 },
+            giant: { width: 80, height: 50, cellSize: 15 },
+            colossal: { width: 148, height: 90, cellSize: 7 }, // New size
+            screensaver: { width: 384, height: 216, cellSize: 5 }
+        };
+
+        // Game objects
+        let snake = [];
+        let direction = { x: 1, y: 0 };
+        let nextDirection = { x: 1, y: 0 };
+        let food = [];
+        let score = 0;
+        let currentSpeed = 600;
+
+        // Color schemes
+        const colorSchemes = {
+            rainbow: {
+                head: '#ffffff',
+                colors: ['#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ff00', '#00ff80', '#00ffff', '#0080ff', '#0000ff', '#8000ff', '#ff00ff', '#ff0080'],
+                useHSL: true
+            },
+            fire: {
+                head: '#ffff00',
+                colors: ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00'],
+                useHSL: true
+            },
+            ocean: {
+                head: '#00ffff',
+                colors: ['#0000ff', '#0040ff', '#0080ff', '#00bfff', '#00ffff', '#00ff80', '#00ff00'],
+                useHSL: true
+            },
+            purple: {
+                head: '#ffffff',
+                colors: ['#4a0080', '#6600cc', '#8000ff', '#bf00ff', '#ff00ff'],
+                useHSL: true
+            },
+            classic: {
+                head: '#90ee90',
+                colors: ['#006400', '#228b22', '#32cd32', '#90ee90', '#98fb98'],
+                useHSL: false
+            },
+            neonGlow: {
+                head: '#00ffff',
+                colors: ['#ff0080', '#ff0040', '#ff4000', '#ff8000', '#ffff00', '#80ff00', '#00ff40', '#00ff80', '#00ffff', '#0080ff', '#4000ff', '#8000ff'],
+                useHSL: true
+            },
+            retroPixel: {
+                head: '#ffffff',
+                colors: ['#8b0000', '#b22222', '#dc143c', '#ff1493', '#ff69b4', '#ffc0cb'],
+                useHSL: false
+            },
+            galaxy: {
+                head: '#ffffff',
+                colors: ['#191970', '#483d8b', '#6a5acd', '#7b68ee', '#9370db', '#ba55d3', '#da70d6', '#ee82ee', '#dda0dd', '#d8bfd8'],
+                useHSL: true
+            },
+            sunset: {
+                head: '#fffacd',
+                colors: ['#8b0000', '#b22222', '#cd5c5c', '#f08080', '#fa8072', '#ffa07a', '#ffd700', '#ffff00', '#fffacd'],
+                useHSL: true
+            },
+            matrix: {
+                head: '#00ff00',
+                colors: ['#003300', '#004d00', '#006600', '#008000', '#009900', '#00b300', '#00cc00', '#00ff00'],
+                useHSL: false
+            },
+            // --- New bit-depth color schemes ---
+            '1bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#ffffff'],
+                useHSL: false
+            },
+            '2bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#555555', '#aaaaaa', '#ffffff'],
+                useHSL: false
+            },
+            '3bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffffff'],
+                useHSL: false
+            },
+            '4bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0', '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff'],
+                useHSL: false
+            },
+            '5bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#202020', '#404040', '#606060', '#808080', '#a0a0a0', '#c0c0c0', '#e0e0e0', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffa500', '#008000', '#800080', '#008080', '#800000', '#808000', '#000080', '#c0c0c0', '#808080', '#ff69b4', '#b22222', '#dc143c', '#ff1493', '#ff69b4', '#ffc0cb', '#ffd700', '#fffacd', '#f08080'],
+                useHSL: false
+            },
+            '6bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#202020', '#404040', '#606060', '#808080', '#a0a0a0', '#c0c0c0', '#e0e0e0', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffa500', '#008000', '#800080', '#008080', '#800000', '#808000', '#000080', '#c0c0c0', '#808080', '#ff69b4', '#b22222', '#dc143c', '#ff1493', '#ff69b4', '#ffc0cb', '#ffd700', '#fffacd', '#f08080', '#4682b4', '#d2691e', '#9acd32', '#00ced1', '#9400d3', '#ff4500', '#2e8b57', '#a0522d', '#deb887', '#5f9ea0', '#7fff00', '#d8bfd8', '#b0e0e6', '#ff6347', '#adff2f', '#ffb6c1', '#20b2aa', '#87cefa', '#778899', '#bdb76b', '#e9967a', '#8fbc8f', '#483d8b', '#b8860b', '#b22222', '#228b22', '#32cd32', '#90ee90', '#98fb98'],
+                useHSL: false
+            },
+            '7bit': {
+                head: '#ffffff',
+                colors: ['#000000', '#202020', '#404040', '#606060', '#808080', '#a0a0a0', '#c0c0c0', '#e0e0e0', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffa500', '#008000', '#800080', '#008080', '#800000', '#808000', '#000080', '#c0c0c0', '#808080', '#ff69b4', '#b22222', '#dc143c', '#ff1493', '#ff69b4', '#ffc0cb', '#ffd700', '#fffacd', '#f08080', '#4682b4', '#d2691e', '#9acd32', '#00ced1', '#9400d3', '#ff4500', '#2e8b57', '#a0522d', '#deb887', '#5f9ea0', '#7fff00', '#d8bfd8', '#b0e0e6', '#ff6347', '#adff2f', '#ffb6c1', '#20b2aa', '#87cefa', '#778899', '#bdb76b', '#e9967a', '#8fbc8f', '#483d8b', '#b8860b', '#b22222', '#228b22', '#32cd32', '#90ee90', '#98fb98', '#ff7f50', '#6495ed', '#fff8dc', '#dc143c', '#00fa9a', '#ffd700', '#00bfff', '#ff00ff', '#1e90ff', '#ff1493', '#00ced1', '#00ff7f', '#ff4500', '#ff6347', '#4682b4', '#d2691e', '#9acd32', '#00ced1', '#9400d3', '#ff4500', '#2e8b57', '#a0522d', '#deb887', '#5f9ea0', '#7fff00', '#d8bfd8', '#b0e0e6', '#ff6347', '#adff2f', '#ffb6c1', '#20b2aa', '#87cefa', '#778899', '#bdb76b', '#e9967a', '#8fbc8f', '#483d8b', '#b8860b', '#b22222', '#228b22', '#32cd32', '#90ee90', '#98fb98'],
+                useHSL: false
+            },
+            '8bit': {
+                head: '#ffffff',
+                colors: [
+                    '#000000', '#800000', '#008000', '#808000', '#000080', '#800080', '#008080', '#c0c0c0',
+                    '#808080', '#ff0000', '#00ff00', '#ffff00', '#0000ff', '#ff00ff', '#00ffff', '#ffffff',
+                    '#000000', '#00005f', '#000087', '#0000af', '#0000d7', '#0000ff', '#005f00', '#005f5f',
+                    '#005f87', '#005faf', '#005fd7', '#005fff', '#008700', '#00875f', '#008787', '#0087af',
+                    '#0087d7', '#0087ff', '#00af00', '#00af5f', '#00af87', '#00afaf', '#00afd7', '#00afff',
+                    '#00d700', '#00d75f', '#00d787', '#00d7af', '#00d7d7', '#00d7ff', '#00ff00', '#00ff5f',
+                    '#00ff87', '#00ffaf', '#00ffd7', '#00ffff', '#5f0000', '#5f005f', '#5f0087', '#5f00af',
+                    '#5f00d7', '#5f00ff', '#5f5f00', '#5f5f5f', '#5f5f87', '#5f5faf', '#5f5fd7', '#5f5fff',
+                    '#5f8700', '#5f875f', '#5f8787', '#5f87af', '#5f87d7', '#5f87ff', '#5faf00', '#5faf5f',
+                    '#5faf87', '#5fafaf', '#5fafd7', '#5fafff', '#5fd700', '#5fd75f', '#5fd787', '#5fd7af',
+                    '#5fd7d7', '#5fd7ff', '#5fff00', '#5fff5f', '#5fff87', '#5fffaf', '#5fffd7', '#5fffff',
+                    '#870000', '#87005f', '#870087', '#8700af', '#8700d7', '#8700ff', '#875f00', '#875f5f',
+                    '#875f87', '#875faf', '#875fd7', '#875fff', '#878700', '#87875f', '#878787', '#8787af',
+                    '#8787d7', '#8787ff', '#87af00', '#87af5f', '#87af87', '#87afaf', '#87afd7', '#87afff',
+                    '#87d700', '#87d75f', '#87d787', '#87d7af', '#87d7d7', '#87d7ff', '#87ff00', '#87ff5f',
+                    '#87ff87', '#87ffaf', '#87ffd7', '#87ffff', '#af0000', '#af005f', '#af0087', '#af00af',
+                    '#af00d7', '#af00ff', '#af5f00', '#af5f5f', '#af5f87', '#af5faf', '#af5fd7', '#af5fff',
+                    '#af8700', '#af875f', '#af8787', '#af87af', '#af87d7', '#af87ff', '#afaf00', '#afaf5f',
+                    '#afaf87', '#afafaf', '#afafd7', '#afafff', '#afd700', '#afd75f', '#afd787', '#afd7af',
+                    '#afd7d7', '#afd7ff', '#afff00', '#afff5f', '#afff87', '#afffaf', '#afffd7', '#afffff',
+                    '#d70000', '#d7005f', '#d70087', '#d700af', '#d700d7', '#d700ff', '#d75f00', '#d75f5f',
+                    '#d75f87', '#d75faf', '#d75fd7', '#d75fff', '#d78700', '#d7875f', '#d78787', '#d787af',
+                    '#d787d7', '#d787ff', '#d7af00', '#d7af5f', '#d7af87', '#d7afaf', '#d7afd7', '#d7afff',
+                    '#d7d700', '#d7d75f', '#d7d787', '#d7d7af', '#d7d7d7', '#d7d7ff', '#d7ff00', '#d7ff5f',
+                    '#d7ff87', '#d7ffaf', '#d7ffd7', '#d7ffff', '#ff0000', '#ff005f', '#ff0087', '#ff00af',
+                    '#ff00d7', '#ff00ff', '#ff5f00', '#ff5f5f', '#ff5f87', '#ff5faf', '#ff5fd7', '#ff5fff',
+                    '#ff8700', '#ff875f', '#ff8787', '#ff87af', '#ff87d7', '#ff87ff', '#ffaf00', '#ffaf5f',
+                    '#ffaf87', '#ffafaf', '#ffafd7', '#ffafff', '#ffd700', '#ffd75f', '#ffd787', '#ffd7af',
+                    '#ffd7d7', '#ffd7ff', '#ffff00', '#ffff5f', '#ffff87', '#ffffaf', '#ffffd7', '#ffffff'
+                ],
+                useHSL: false
+            }
+        };
+
+        // Demo mode path state
+        let demoPath = [];
+        let demoPathIndex = 0;
+        let demoStartTime = 0;
+
+        // Store original board size for Demo mode adjustment
+        let originalBoardSize = null;
+
+        // Initialize game
+        function initGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            loadSettings();
+            setupCanvas();
+            showSettings();
+            
+            // Event listeners
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Touch controls for mobile
+            let touchStartX, touchStartY;
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (!touchStartX || !touchStartY) return;
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Horizontal swipe
+                    if (deltaX > 0 && direction.x !== -1) {
+                        nextDirection = { x: 1, y: 0 };
+                    } else if (deltaX < 0 && direction.x !== 1) {
+                        nextDirection = { x: -1, y: 0 };
+                    }
+                } else {
+                    // Vertical swipe
+                    if (deltaY > 0 && direction.y !== -1) {
+                        nextDirection = { x: 0, y: 1 };
+                    } else if (deltaY < 0 && direction.y !== 1) {
+                        nextDirection = { x: 0, y: -1 };
+                    }
+                }
+                
+                touchStartX = null;
+                touchStartY = null;
+            });
+
+            // Listen for key press to exit Demo mode
+            document.addEventListener('keydown', function(e) {
+                if (demoMode) {
+                    demoMode = false;
+                    resetGame();
+                    startGame();
+                }
+            });
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('snakeGameSettings');
+            if (saved) {
+                settings = { ...settings, ...JSON.parse(saved) };
+            }
+            
+            // Load high score for current board size
+            const highScore = localStorage.getItem(`snakeHighScore_${settings.boardSize}`) || 0;
+            document.getElementById('high-score').textContent = highScore;
+        }
+
+        function saveSettings() {
+            localStorage.setItem('snakeGameSettings', JSON.stringify(settings));
+        }
+
+        function setupCanvas() {
+            const boardConfig = boardSizes[settings.boardSize];
+            canvas.width = boardConfig.width * boardConfig.cellSize;
+            canvas.height = boardConfig.height * boardConfig.cellSize;
+        }
+
+        function getCachedPath(boardSize) {
+            const cached = localStorage.getItem(`hamiltonianPath_${boardSize}`);
+            return cached ? JSON.parse(cached) : null;
+        }
+
+        function cachePath(boardSize, path) {
+            localStorage.setItem(`hamiltonianPath_${boardSize}`, JSON.stringify(path));
+        }
+
+        function showProgress() {
+            document.getElementById('progressContainer').style.display = 'block';
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = Math.round(percent) + '%';
+        }
+
+        function generateHamiltonianCycleWithProgress(boardConfig) {
+            const w = boardConfig.width;
+            const h = boardConfig.height;
+            const path = [];
+            const totalCells = w * h;
+            let currentCell = 0;
+            
+            // Go up the leftmost column
+            for (let y = h - 1; y >= 0; y--) {
+                path.push({ x: 0, y });
+                currentCell++;
+                if (currentCell % 1000 === 0) {
+                    updateProgress((currentCell / totalCells) * 100);
+                }
+            }
+            // Traverse each row
+            for (let y = 0; y < h; y++) {
+                if (y % 2 === 0) {
+                    // Go right across the row
+                    for (let x = 1; x < w; x++) {
+                        path.push({ x, y });
+                        currentCell++;
+                        if (currentCell % 1000 === 0) {
+                            updateProgress((currentCell / totalCells) * 100);
+                        }
+                    }
+                } else {
+                    // Go left across the row
+                    for (let x = w - 1; x > 0; x--) {
+                        path.push({ x, y });
+                        currentCell++;
+                        if (currentCell % 1000 === 0) {
+                            updateProgress((currentCell / totalCells) * 100);
+                        }
+                    }
+                }
+            }
+            updateProgress(100);
+            return path;
+        }
+
+        function resetGame() {
+            const boardConfig = boardSizes[settings.boardSize];
+            
+            // Reset snake
+            snake = [];
+            for (let i = 4; i >= 0; i--) {
+                snake.push({ x: i, y: Math.floor(boardConfig.height / 2) });
+            }
+            
+            // Reset game state
+            direction = { x: 1, y: 0 };
+            nextDirection = { x: 1, y: 0 };
+            score = 0;
+            currentSpeed = settings.speed;
+            multiplierActive = 0;
+            speedBoostActive = 0;
+            food = [];
+            
+            // Generate initial food line along the Hamiltonian path
+            if (demoMode && demoPath.length > 0) {
+                // Set starting food count per board size
+                const startingFoodBySize = {
+                    small: 10,
+                    medium: 15,
+                    large: 20,
+                    xlarge: 25,
+                    giant: 40,
+                    colossal: 80,
+                    screensaver: 200
+                };
+                const startFoodCount = settings.foodDensity || startingFoodBySize[settings.boardSize] || 10;
+                
+                // Place scaled food pieces directly on the path in front of the snake
+                const snakeStartIndex = 0; // Snake starts at the beginning of the path
+                for (let i = 0; i < startFoodCount && (snakeStartIndex + i + 30) < demoPath.length; i++) {
+                    const pathPos = demoPath[snakeStartIndex + i + 30]; // +30 to place food 25 places ahead of the 5-segment snake
+                    if (!isPositionOccupied(pathPos.x, pathPos.y)) {
+                        food.push({ x: pathPos.x, y: pathPos.y });
+                    }
+                }
+            } else {
+                // Initial food batch uses food density
+                generateFoodBatch(settings.foodDensity || 25);
+            }
+            
+            updateStatusBar();
+            // In demo mode, initialize snake on the path
+            if (demoMode && demoPath.length > 0) {
+                snake = [];
+                for (let i = 0; i < 5; i++) {
+                    snake.push(demoPath[(demoPathIndex - i + demoPath.length) % demoPath.length]);
+                }
+            }
+        }
+
+        function generateFood() {
+            const boardConfig = boardSizes[settings.boardSize];
+            // Find all empty cells
+            let emptyCells = [];
+            for (let x = 0; x < boardConfig.width; x++) {
+                for (let y = 0; y < boardConfig.height; y++) {
+                    if (!isPositionOccupied(x, y)) {
+                        emptyCells.push({ x, y });
+                    }
+                }
+            }
+            if (emptyCells.length === 0) {
+                // No room to spawn food
+                return;
+            }
+            // Pick a random empty cell
+            const newFood = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            food.push(newFood);
+        }
+
+        function generateFoodBatch(count) {
+            const boardConfig = boardSizes[settings.boardSize];
+            
+            // For single food generation, use faster random placement
+            if (count === 1) {
+                let attempts = 0;
+                const maxAttempts = 100;
+                
+                while (attempts < maxAttempts) {
+                    const x = Math.floor(Math.random() * boardConfig.width);
+                    const y = Math.floor(Math.random() * boardConfig.height);
+                    
+                    if (!isPositionOccupied(x, y)) {
+                        food.push({ x, y });
+                        return 1;
+                    }
+                    attempts++;
+                }
+                return 0; // Couldn't find empty space
+            }
+            
+            // For batch generation, use the original algorithm
+            let emptyCells = [];
+            for (let x = 0; x < boardConfig.width; x++) {
+                for (let y = 0; y < boardConfig.height; y++) {
+                    if (!isPositionOccupied(x, y)) {
+                        emptyCells.push({ x, y });
+                    }
+                }
+            }
+            if (emptyCells.length === 0) {
+                return 0; // No room to spawn food
+            }
+            
+            // Shuffle and take the first 'count' cells
+            const shuffled = emptyCells.sort(() => Math.random() - 0.5);
+            const toAdd = Math.min(count, shuffled.length);
+            
+            for (let i = 0; i < toAdd; i++) {
+                food.push(shuffled[i]);
+            }
+            
+            return toAdd;
+        }
+
+
+
+        function isPositionOccupied(x, y) {
+            // Check snake
+            for (let segment of snake) {
+                if (segment.x === x && segment.y === y) return true;
+            }
+            
+            // Check food
+            for (let f of food) {
+                if (f.x === x && f.y === y) return true;
+            }
+            
+            return false;
+        }
+
+        function handleKeyPress(e) {
+            if (!gameRunning && e.code === 'Space') {
+                e.preventDefault();
+                startGame();
+                return;
+            }
+            
+            switch (e.code) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (direction.y !== 1) nextDirection = { x: 0, y: -1 };
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (direction.y !== -1) nextDirection = { x: 0, y: 1 };
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (direction.x !== 1) nextDirection = { x: -1, y: 0 };
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (direction.x !== -1) nextDirection = { x: 1, y: 0 };
+                    break;
+                case 'Space':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'KeyR':
+                    e.preventDefault();
+                    restartGame();
+                    break;
+            }
+        }
+
+        function startGame() {
+            if (gameRunning) return;
+            
+            gameRunning = true;
+            gamePaused = false;
+            hideSettings();
+            hideGameOver();
+            resetGame();
+            
+            // Set demo start time if in demo mode
+            if (demoMode) {
+                demoStartTime = Date.now();
+            }
+            
+            gameLoop = setInterval(gameUpdate, currentSpeed);
+        }
+
+        function gameUpdate() {
+            if (gamePaused) return;
+            if (demoMode && demoPath.length > 0) {
+                // Move snake along the demo path
+                demoPathIndex = (demoPathIndex + 1) % demoPath.length;
+                const newHead = demoPath[demoPathIndex];
+                snake.unshift({ x: newHead.x, y: newHead.y });
+                // Only check self-collision (not wall collision) in Demo mode
+                for (let i = 1; i < snake.length; i++) {
+                    if (snake[i].x === newHead.x && snake[i].y === newHead.y) {
+                        // Death: switch to next color scheme and restart demo
+                        const colorSchemeKeys = Object.keys(colorSchemes);
+                        const currentIndex = colorSchemeKeys.indexOf(settings.colorScheme);
+                        const nextIndex = (currentIndex + 1) % colorSchemeKeys.length;
+                        settings.colorScheme = colorSchemeKeys[nextIndex];
+                        resetGame();
+                        demoPathIndex = 0;
+                        score = 0;
+                        demoStartTime = Date.now(); // Reset timer for new run
+                        updateStatusBar();
+                        draw();
+                        return;
+                    }
+                }
+                // Check food collision
+                let ateFood = false;
+                for (let i = food.length - 1; i >= 0; i--) {
+                    if (newHead.x === food[i].x && newHead.y === food[i].y) {
+                        food.splice(i, 1);
+                        ateFood = true;
+                        score += 10;
+                        // Restore per-bite batch food spawning, but do not exceed food count
+                        const maxFood = settings.foodCount || 8;
+                        const foodDensity = Math.min(settings.foodDensity || 25, 35);
+                        const toSpawn = Math.min(maxFood - food.length, foodDensity);
+                        if (toSpawn > 0) generateFoodBatch(toSpawn);
+                        // Speed increase in Demo mode
+                        if (settings.speedIncrease && currentSpeed > 10) {
+                            currentSpeed = Math.max(10, currentSpeed - 1);
+                            clearInterval(gameLoop);
+                            gameLoop = setInterval(gameUpdate, currentSpeed);
+                        }
+                        break;
+                    }
+                }
+                
+
+                
+                // Only remove tail if no food eaten (grow if ate food)
+                if (!ateFood) {
+                    snake.pop();
+                }
+                
+
+                
+                updateStatusBar();
+                draw();
+                return;
+            }
+            
+            // Update direction
+            direction = { ...nextDirection };
+            
+            // Move snake
+            const head = { ...snake[0] };
+            head.x += direction.x;
+            head.y += direction.y;
+            
+            const boardConfig = boardSizes[settings.boardSize];
+            
+            // Check wall collision (ultra-forgiving - just stop)
+            if (head.x < 0 || head.x >= boardConfig.width || head.y < 0 || head.y >= boardConfig.height) {
+                return; // Just stop movement, don't end game
+            }
+            
+            // Check body collision (except tail)
+            for (let i = 0; i < snake.length - 1; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    return; // Just stop movement, don't end game
+                }
+            }
+            
+            // Check tail collision (only death condition)
+            const tail = snake[snake.length - 1];
+            if (head.x === tail.x && head.y === tail.y && snake.length > 5) {
+                endGame();
+                return;
+            }
+            
+            // Add new head
+            snake.unshift(head);
+            
+            // Check food collision
+            let ateFood = false;
+            for (let i = food.length - 1; i >= 0; i--) {
+                if (head.x === food[i].x && head.y === food[i].y) {
+                    food.splice(i, 1);
+                    ateFood = true;
+                    score += 10;
+                    // Restore per-bite batch food spawning, but do not exceed food count
+                    const maxFood = settings.foodCount || 8;
+                    const foodDensity = Math.min(settings.foodDensity || 25, 35);
+                    const toSpawn = Math.min(maxFood - food.length, foodDensity);
+                    if (toSpawn > 0) generateFoodBatch(toSpawn);
+                    // Speed increase
+                    if (settings.speedIncrease && currentSpeed > 150) {
+                        currentSpeed = Math.max(150, currentSpeed - 1);
+                        clearInterval(gameLoop);
+                        gameLoop = setInterval(gameUpdate, currentSpeed);
+                    }
+                    break;
+                }
+            }
+            
+
+            
+            // Remove tail if no food eaten
+            if (!ateFood) {
+                snake.pop();
+            }
+            
+
+            
+            updateStatusBar();
+            draw();
+        }
+
+        function draw() {
+            const boardConfig = boardSizes[settings.boardSize];
+            const cellSize = boardConfig.cellSize;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= boardConfig.width; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * cellSize, 0);
+                ctx.lineTo(x * cellSize, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= boardConfig.height; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * cellSize);
+                ctx.lineTo(canvas.width, y * cellSize);
+                ctx.stroke();
+            }
+            
+            // Draw snake with gradient
+            const scheme = colorSchemes[settings.colorScheme];
+            const colors = scheme.colors;
+            
+            snake.forEach((segment, index) => {
+                if (index === 0) {
+                    // Head
+                    ctx.fillStyle = scheme.head;
+                } else {
+                    let color;
+                    // For xbit color schemes, use simple color cycling
+                    if (["1bit","2bit","3bit","4bit","5bit","6bit","7bit","8bit"].includes(settings.colorScheme)) {
+                        color = colors[(index - 1) % colors.length];
+                    } else {
+                        const repeats = 3;
+                        const t = (index - 1) / Math.max(1, (snake.length - 1));
+                        const cycleT = (t * repeats) % 1;
+                        const useHSL = scheme.useHSL;
+                        if (settings.colorScheme === 'rainbow') {
+                            // Unified: Repeat rainbow gradient 3 times using HSL
+                            const hue = cycleT * 360;
+                            color = `hsl(${hue}, 100%, 50%)`;
+                        } else {
+                            // Unified: Repeat symmetric gradient 3 times
+                            const startColor = scheme.colors[0];
+                            const endColor = scheme.colors[scheme.colors.length - 1];
+                            let t2;
+                            if (cycleT < 0.5) {
+                                t2 = cycleT / 0.5;
+                                color = useHSL ? interpolateColorHSL(startColor, endColor, t2) : interpolateColor(startColor, endColor, t2);
+                            } else {
+                                t2 = (cycleT - 0.5) / 0.5;
+                                color = useHSL ? interpolateColorHSL(endColor, startColor, t2) : interpolateColor(endColor, startColor, t2);
+                            }
+                        }
+                    }
+                    ctx.fillStyle = color;
+                }
+                
+                ctx.fillRect(segment.x * cellSize, segment.y * cellSize, cellSize, cellSize);
+                
+                // Add border for better visibility
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(segment.x * cellSize, segment.y * cellSize, cellSize, cellSize);
+            });
+            
+            // Draw food
+            ctx.fillStyle = '#ff0000';
+            food.forEach(f => {
+                ctx.beginPath();
+                ctx.arc(
+                    f.x * cellSize + cellSize / 2,
+                    f.y * cellSize + cellSize / 2,
+                    cellSize / 3,
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+            });
+
+        }
+
+        function updateStatusBar() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('length').textContent = snake.length;
+            document.getElementById('food-count').textContent = food.length;
+            document.getElementById('speed').textContent = currentSpeed + 'ms';
+            
+            // Update high score for current board size
+            const currentHighScore = parseInt(localStorage.getItem(`snakeHighScore_${settings.boardSize}`) || 0);
+            if (score > currentHighScore) {
+                localStorage.setItem(`snakeHighScore_${settings.boardSize}`, score);
+                document.getElementById('high-score').textContent = score;
+            }
+            
+            // Demo mode metrics
+            if (demoMode && demoPath.length > 0) {
+                document.getElementById('demoMetrics').style.display = 'block';
+                document.getElementById('demoMetrics2').style.display = 'block';
+                
+                // Calculate path completion percentage
+                const pathCompletionPercent = Math.min(100, Math.round((snake.length / demoPath.length) * 100));
+                document.getElementById('pathCompletion').textContent = pathCompletionPercent + '%';
+                
+                // Calculate current run time
+                const currentTime = Date.now();
+                const runTimeMs = currentTime - demoStartTime;
+                const runTimeSeconds = Math.floor(runTimeMs / 1000);
+                
+                // Format time display
+                let timeDisplay;
+                if (runTimeSeconds < 60) {
+                    timeDisplay = runTimeSeconds + 's';
+                } else if (runTimeSeconds < 3600) {
+                    const minutes = Math.floor(runTimeSeconds / 60);
+                    const seconds = runTimeSeconds % 60;
+                    timeDisplay = minutes + 'm ' + seconds + 's';
+                } else {
+                    const hours = Math.floor(runTimeSeconds / 3600);
+                    const minutes = Math.floor((runTimeSeconds % 3600) / 60);
+                    timeDisplay = hours + 'h ' + minutes + 'm';
+                }
+                document.getElementById('timeToCollision').textContent = timeDisplay;
+            } else {
+                document.getElementById('demoMetrics').style.display = 'none';
+                document.getElementById('demoMetrics2').style.display = 'none';
+            }
+            
+
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            
+            const stats = `
+                Final Score: ${score}<br>
+                Snake Length: ${snake.length}<br>
+                Food Eaten: ${Math.floor(score / 10)}
+            `;
+            
+            document.getElementById('gameOverStats').innerHTML = stats;
+            showGameOver();
+        }
+
+        function togglePause() {
+            if (!gameRunning) return;
+            
+            gamePaused = !gamePaused;
+            document.getElementById('pauseOverlay').style.display = gamePaused ? 'block' : 'none';
+        }
+
+        function restartGame() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            hideGameOver();
+            hideSettings();
+            startGame();
+        }
+
+        function showSettings() {
+            // Load current settings into form
+            document.getElementById('speedSetting').value = settings.speed;
+            document.getElementById('boardSizeSetting').value = settings.boardSize;
+            document.getElementById('colorSchemeSetting').value = settings.colorScheme;
+            document.getElementById('speedIncreaseSetting').checked = settings.speedIncrease;
+
+            document.getElementById('demoModeSetting').checked = demoMode;
+            
+
+            updateFoodCountOptions();
+            // Add 50ms speed option if demo mode is checked
+            const speedSelect = document.getElementById('speedSetting');
+            let has50 = false;
+            for (let i = 0; i < speedSelect.options.length; i++) {
+                if (speedSelect.options[i].value === '50') { has50 = true; break; }
+            }
+            if (document.getElementById('demoModeSetting').checked && !has50) {
+                const opt = document.createElement('option');
+                opt.value = '50';
+                opt.textContent = 'Ultra Fast (50ms)';
+                speedSelect.appendChild(opt);
+            } else if (!document.getElementById('demoModeSetting').checked && has50) {
+                // Remove 50ms option if not in demo mode
+                for (let i = 0; i < speedSelect.options.length; i++) {
+                    if (speedSelect.options[i].value === '50') {
+                        speedSelect.remove(i);
+                        break;
+                    }
+                }
+            }
+            
+
+            document.getElementById('foodCountSetting').value = settings.foodCount;
+            document.getElementById('foodDensity').value = Math.min(settings.foodDensity || 25, 35);
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function applySettings() {
+            settings.speed = parseInt(document.getElementById('speedSetting').value);
+            settings.foodCount = parseInt(document.getElementById('foodCountSetting').value);
+            settings.boardSize = document.getElementById('boardSizeSetting').value;
+            settings.colorScheme = document.getElementById('colorSchemeSetting').value;
+            settings.speedIncrease = document.getElementById('speedIncreaseSetting').checked;
+
+            demoMode = document.getElementById('demoModeSetting').checked;
+            settings.foodDensity = Math.min(parseInt(document.getElementById('foodDensity').value) || 25, 35);
+            saveSettings();
+            // Adjust board size for Demo mode if needed
+            if (demoMode) {
+                const boardConfig = { ...boardSizes[settings.boardSize] };
+                if (boardConfig.width % 2 === 1 && boardConfig.height % 2 === 1) {
+                    // Store original size
+                    originalBoardSize = settings.boardSize;
+                    // Create a new board size with even width
+                    const newWidth = boardConfig.width + 1;
+                    boardSizes['demoEven'] = { width: newWidth, height: boardConfig.height, cellSize: boardConfig.cellSize };
+                    settings.boardSize = 'demoEven';
+                } else {
+                    originalBoardSize = null;
+                }
+            } else if (originalBoardSize) {
+                // Restore original board size when exiting Demo mode
+                settings.boardSize = originalBoardSize;
+                originalBoardSize = null;
+            }
+            setupCanvas();
+            hideSettings();
+            if (demoMode) {
+                const boardConfig = boardSizes[settings.boardSize];
+                // Try to get cached path first
+                let path = getCachedPath(settings.boardSize);
+                if (!path) {
+                    // Generate path with progress bar
+                    showProgress();
+                    path = generateHamiltonianCycleWithProgress(boardConfig);
+                    cachePath(settings.boardSize, path);
+                    hideProgress();
+                }
+                demoPath = path;
+                demoPathIndex = 0;
+            }
+            startGame();
+        }
+
+        function showGameOver() {
+           document.getElementById('gameOverModal').style.display = 'flex';
+       }
+
+       function hideGameOver() {
+           document.getElementById('gameOverModal').style.display = 'none';
+       }
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(x => x + x).join('');
+            }
+            const num = parseInt(hex, 16);
+            return {
+                r: (num >> 16) & 255,
+                g: (num >> 8) & 255,
+                b: num & 255
+            };
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        function interpolateColor(color1, color2, t) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+            return rgbToHex(r, g, b);
+        }
+
+        function generateDynamicStops(startColor, endColor, numStops) {
+            const stops = [];
+            for (let i = 0; i < numStops; i++) {
+                const t = i / (numStops - 1);
+                stops.push(interpolateColor(startColor, endColor, t));
+            }
+            return stops;
+        }
+
+        function updateFoodCountOptions() {
+            const boardSize = document.getElementById('boardSizeSetting').value;
+            const foodCountSelect = document.getElementById('foodCountSetting');
+            let options = [];
+            let defaultValue = 8;
+            if (boardSize === 'large') {
+                options = [8, 12, 20, 40, 150, 300, 500];
+                defaultValue = 12;
+            } else if (boardSize === 'xlarge') {
+                options = [12, 20, 40, 80, 240, 500, 800];
+                defaultValue = 20;
+            } else if (boardSize === 'giant') {
+                options = [20, 40, 80, 160, 400, 800, 1500];
+                defaultValue = 40;
+            } else if (boardSize === 'colossal') {
+                options = [40, 100, 250, 500, 1000, 2000, 4000, 8000];
+                defaultValue = 500;
+            } else if (boardSize === 'screensaver') {
+                options = [100, 250, 500, 1000, 2000, 5000, 10000];
+                defaultValue = 500;
+            } else {
+                options = [5, 8, 12, 100];
+                defaultValue = 8;
+            }
+            // Save current value to try to preserve it
+            const current = parseInt(foodCountSelect.value);
+            foodCountSelect.innerHTML = '';
+            options.forEach(val => {
+                let label = '';
+                if (val === 5) label = 'Few (5 pieces)';
+                else if (val === 8) label = 'Normal (8 pieces)';
+                else if (val === 12) label = 'Many (12 pieces)';
+                else if (val === 20) label = 'Lots (20 pieces)';
+                else if (val === 40) label = 'Plenty (40 pieces)';
+                else if (val === 80) label = 'Plenty (80 pieces)';
+                else if (val === 100) label = 'Mayhem (100 pieces)';
+                else if (val === 150) label = 'Mayhem (150 pieces)';
+                else if (val === 160) label = 'Plenty (160 pieces)';
+                else if (val === 240) label = 'Mayhem (240 pieces)';
+                else if (val === 300) label = 'Chaos (300 pieces)';
+                else if (val === 400) label = 'Mayhem (400 pieces)';
+                else if (val === 500) label = 'Chaos (500 pieces)';
+                else if (val === 800) label = 'Insane (800 pieces)';
+                else if (val === 1000) label = 'Insane (1000 pieces)';
+                else if (val === 1500) label = 'Insane (1500 pieces)';
+                else if (val === 2000) label = 'Insane (2000 pieces)';
+                else if (val === 5000) label = 'Apocalyptic (5000 pieces)';
+                else if (val === 10000) label = 'Apocalyptic (10000 pieces)';
+                else label = val + ' pieces';
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = label;
+                foodCountSelect.appendChild(opt);
+            });
+            // Set value to current if still valid, else to default
+            if (options.includes(current)) {
+                foodCountSelect.value = current;
+            } else {
+                foodCountSelect.value = defaultValue;
+            }
+        }
+
+        function hexToHsl(hex) {
+            // Convert hex to RGB first
+            const rgb = hexToRgb(hex);
+            let { r, g, b } = rgb;
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: h * 360, s: s * 100, l: l * 100 };
+        }
+
+        function hslToHex(h, s, l) {
+            s /= 100; l /= 100;
+            let c = (1 - Math.abs(2 * l - 1)) * s;
+            let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            let m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+            if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+            else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+            else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+            else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+            else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+            else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+            r = Math.round((r + m) * 255);
+            g = Math.round((g + m) * 255);
+            b = Math.round((b + m) * 255);
+            return rgbToHex(r, g, b);
+        }
+
+        function interpolateColorHSL(hex1, hex2, t) {
+            const hsl1 = hexToHsl(hex1);
+            const hsl2 = hexToHsl(hex2);
+            // Interpolate hue correctly around the circle
+            let dh = hsl2.h - hsl1.h;
+            if (dh > 180) dh -= 360;
+            if (dh < -180) dh += 360;
+            const h = (hsl1.h + dh * t + 360) % 360;
+            const s = hsl1.s + (hsl2.s - hsl1.s) * t;
+            const l = hsl1.l + (hsl2.l - hsl1.l) * t;
+            return hslToHex(h, s, l);
+        }
+
+        // Step 1: Generate a true Hamiltonian cycle for the board
+        function generateHamiltonianCycle(boardConfig) {
+            const w = boardConfig.width;
+            const h = boardConfig.height;
+            const path = [];
+            // Go up the leftmost column
+            for (let y = h - 1; y >= 0; y--) {
+                path.push({ x: 0, y });
+            }
+            // Traverse each row
+            for (let y = 0; y < h; y++) {
+                if (y % 2 === 0) {
+                    // Go right across the row
+                    for (let x = 1; x < w; x++) {
+                        path.push({ x, y });
+                    }
+                } else {
+                    // Go left across the row
+                    for (let x = w - 1; x > 0; x--) {
+                        path.push({ x, y });
+                    }
+                }
+            }
+            return path;
+        }
+
+       // Initialize game when page loads
+       window.addEventListener('load', initGame);
+       document.getElementById('boardSizeSetting').addEventListener('change', function() {
+            updateFoodCountOptions();
+            // Update settings.foodCount to match the new dropdown value
+            const foodCountSelect = document.getElementById('foodCountSetting');
+            settings.foodCount = parseInt(foodCountSelect.value);
+        });
+   </script>
+</body>
+</html>
