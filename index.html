@@ -241,15 +241,19 @@
             }
             .status-bar {
                 flex-direction: column;
-                gap: 4px;
-                font-size: 13px;
-                padding: 6px;
+                gap: 2px;
+                font-size: 11px;
+                padding: 2px 2px 0 2px;
+                min-height: 0;
             }
             .status-item {
                 min-width: 0;
                 width: 100%;
                 align-items: flex-start;
+                padding: 0 0 2px 0;
             }
+            /* Hide less important status items on mobile */
+            .status-item:nth-child(n+3) { display: none !important; }
             canvas {
                 width: 98vw !important;
                 height: auto !important;
@@ -268,8 +272,7 @@
                 padding: 14px 0;
             }
             .instructions {
-                font-size: 13px;
-                padding: 0 2px;
+                display: none;
             }
             .settings-content {
                 padding: 10px;
